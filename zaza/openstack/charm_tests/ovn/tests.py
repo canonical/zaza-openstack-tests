@@ -577,3 +577,28 @@ class OVNCentralDeferredRestartTest(
         self.run_package_change_test(
             'ovn-central',
             'ovn-central')
+
+class OVNUpgradeToProposedTest(test_utils.OpenStackBaseTest):
+    """Dist-upgrade tests for networking applications."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Run class setup for running OVN upgrade to proposed tests."""
+        super(OVNUpgradeToProposedTest, cls).setUpClass()
+
+    def test_upgrade_to_proposed(self):
+        """Upgrade to proposed pocket.
+
+        Updates openstack-origin or source config option for OVN
+        applications and dist-upgrades to proposed.
+        """
+        applications = [
+             'ovn-central',
+             'ovn-chassis',
+             'ovn-chassis-sriov',
+        ]
+        deployed_applications = zaza.model.sync_deployed()
+        for application in applications:
+            if application not in deployed_applications:
+                continue
+            upgrade_utils.upgrade_to_proposed(application)

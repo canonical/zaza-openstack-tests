@@ -17,6 +17,7 @@
 import functools
 import logging
 
+from zaza import model
 from zaza.openstack.configure import (
     network,
 )
@@ -140,6 +141,17 @@ def vlan_provider_overcloud_network():
     # Configure the overcloud network
     network.setup_sdn_provider_vlan(network_config,
                                     keystone_session=keystone_session)
+
+
+def reboot_sriov_computes():
+    """Reboot nova-compute-sriov units"""
+    for unit in model.get_units('nova-compute-sriov'):
+        generic_utils.reboot(unit.entity_id)
+    logging.info("Waiting for nova-compute-sriov units to reboot")
+    model.block_until_wl_status_info_starts_with('nova-compute-sriov', "Unit is ready")
+    logging.info("Waiting for all units to be idle")
+    model.block_until_all_units_idle()
+    logging.info("All units are idle")
 
 
 # Configure function to get one gateway with external network

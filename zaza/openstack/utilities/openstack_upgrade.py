@@ -193,6 +193,26 @@ block_until_mysql_innodb_cluster_has_rw = sync_wrapper(
     async_block_until_mysql_innodb_cluster_has_rw)
 
 
+def get_current_source_config(application, model_name=None):
+    """Get an application's openstack-origin or source charm config.
+
+    :param applications: Application name
+    :type applications: str
+    :param model_name: Name of model to query
+    :type model_name: str
+    """
+    src_option = 'openstack-origin'
+    charm_options = zaza.model.get_application_config(
+        application, model_name=model_name)
+    try:
+        charm_options[src_option]
+    except KeyError:
+        src_option = 'source'
+    logging.info("Current {} source config: {}={}".format(
+        application, src_option, charm_options[src_option]['value']))
+    return charm_options[src_option]['value']
+
+
 def set_upgrade_application_config(applications, new_source,
                                    action_managed=True, model_name=None):
     """Set the charm config for upgrade.

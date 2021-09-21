@@ -31,7 +31,10 @@ import zaza
 import zaza.openstack.charm_tests.nova.utils as nova_utils
 import zaza.openstack.charm_tests.test_utils as test_utils
 import zaza.openstack.configure.guest as guest
-import zaza.openstack.utilities.openstack as openstack_utils
+from zaza.openstack.utilities import (
+    openstack as openstack_utils,
+    upgrade_utils as upgrade_utils,
+)
 
 
 class NeutronPluginApiSharedTests(test_utils.OpenStackBaseTest):
@@ -1179,3 +1182,28 @@ class NeutronGatewayDeferredRestartTest(test_utils.BaseDeferredRestartTest):
     def check_clear_hooks(self):
         """Gateway does not defer hooks so noop."""
         return
+
+
+class NeutronUpgradeToProposedTest(test_utils.OpenStackBaseTest):
+    """Dist-upgrade tests for networking applications."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Run class setup for running neutron upgrade to proposed tests."""
+        super(NeutronUpgradeToProposedTest, cls).setUpClass()
+
+    def test_upgrade_to_proposed(self):
+        """Upgrade to proposed pocket.
+
+        Updates openstack-origin or source config option for neutron
+        applications and dist-upgrades to proposed.
+        """
+        applications = [
+             'neutron-gateway',
+             'neutron-api',
+        ]
+        deployed_applications = zaza.model.sync_deployed()
+        for application in applications:
+            if application not in deployed_applications:
+                continue
+            upgrade_utils.upgrade_to_proposed(application)

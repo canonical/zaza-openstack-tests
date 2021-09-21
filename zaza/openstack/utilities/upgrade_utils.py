@@ -20,6 +20,11 @@ import re
 
 import zaza.model
 import zaza.utilities.juju
+from zaza.openstack.utilities import (
+    generic as generic_utils,
+    openstack_upgrade as openstack_upgrade,
+    series_upgrade as series_upgrade_utils,
+)
 from zaza.openstack.utilities.os_versions import (
     OPENSTACK_CODENAMES,
     UBUNTU_OPENSTACK_RELEASE,
@@ -345,3 +350,30 @@ def determine_new_source(ubuntu_version, current_source, new_release,
                      " combination cloud:%s-%s" % (u_version, new_os_version))
         return None
     return "cloud:{}-{}".format(u_version, new_os_version)
+
+
+def upgrade_to_proposed(application):
+    """Dist-upgrade a charm payload to proposed pocket.
+
+    Updates openstack-origin or source config option for the application
+    and dist-upgrades to proposed.
+
+    :param application: The application to upgrade
+    :type application: str
+    :returns: None
+    :rtype: None
+    """
+    source = openstack_upgrade.get_current_source_config(application)
+    assert 'proposed' not in source, (
+        "Source is already {}. Can't upgrade to proposed pocket.".format(source))
+
+    if source == 'distro':
+        new_source = 'distro-proposed'
+    else:
+        new_source = "{}/proposed".format(source)
+
+    generic_utils.set_origin(application, pocket=new_source)
+    for unit in zaza.model.get_units(application):
+        series_upgrade_utils.dist_upgrade(unit.entity_id, force_reboot=False)
+    zaza.model.block_until_all_units_idle()
+    logging.info("All units are idle")

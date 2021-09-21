@@ -26,7 +26,7 @@ import zaza.model
 import zaza.openstack.charm_tests.glance.setup as glance_setup
 import zaza.openstack.charm_tests.test_utils as test_utils
 import zaza.openstack.configure.guest
-import zaza.openstack.utilities.openstack as openstack_utils
+import zaza.openstack.utilities.upgrade_utils as upgrade_utils
 
 
 class BaseGuestCreateTest(unittest.TestCase):
@@ -769,3 +769,29 @@ class SecurityTests(test_utils.OpenStackBaseTest):
                 expected_passes,
                 expected_failures,
                 expected_to_pass=not len(expected_failures))
+
+
+class NovaUpgradeToProposedTest(test_utils.OpenStackBaseTest):
+    """Dist-upgrade tests for networking applications."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Run class setup for running nova upgrade to proposed tests."""
+        super(NovaUpgradeToProposedTest, cls).setUpClass()
+
+    def test_upgrade_to_proposed(self):
+        """Upgrade to proposed pocket.
+
+        Updates openstack-origin or source config option for nova
+        applications and dist-upgrades to proposed.
+        """
+        applications = [
+             'nova-compute',
+             'nova-compute-sriov',
+             'nova-cloud-controller',
+        ]
+        deployed_applications = zaza.model.sync_deployed()
+        for application in applications:
+            if application not in deployed_applications:
+                continue
+            upgrade_utils.upgrade_to_proposed(application)
